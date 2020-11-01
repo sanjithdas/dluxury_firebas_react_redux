@@ -2,7 +2,7 @@
  * @author [Sanjith]
  * @email [sanjith.das@gmail.com]
  * @create date 2020-10-16 23:17:51
- * @modify date 2020-10-21 18:44:12
+ * @modify date 2020-11-01 21:09:30
  * @desc [description]
  */
 
@@ -20,6 +20,8 @@ const {
   getAllRooms,
   createSingeRoom,
   uploadRoomImage,
+  getRoom,
+  getMyRooms,
 } = require("./handlers/rooms");
 
 const { signup, login } = require("./handlers/users");
@@ -83,6 +85,14 @@ app.post("/room", checkAuth, createSingeRoom);
 // list all the rooms
 
 app.get("/rooms", getAllRooms);
+
+// get all the rooms of a user
+
+app.get("/myrooms/:userId", getMyRooms);
+
+//get a room with room no
+
+app.get("/room/:roomno", getRoom);
 
 // upload images for the room
 

@@ -17,6 +17,8 @@ exports.getAllRooms = (request, response) => {
         rooms.push({
           userId: doc.id,
           roomno: doc.data().roomno,
+          roomType: doc.data().roomType,
+          roomRate: doc.data().roomRate,
           imageUrl: doc.data().imageUrl,
           description: doc.data().description,
           createdAt: doc.data().created_at,
@@ -31,16 +33,94 @@ exports.getAllRooms = (request, response) => {
     });
 };
 
+/**
+ * get single room details
+ * @param {*} request
+ * @param {*} response
+ */
+
+exports.getRoom = (request, response) => {
+  console.log(request.params.roomno);
+  const roomno = request.params.roomno;
+  db.collection("rooms")
+    .orderBy("createdAt", "desc")
+    .where("roomno", "==", +request.params.roomno)
+    .get()
+    .then((data) => {
+      let rooms = [];
+      data.forEach((doc) => {
+        rooms.push({
+          userId: doc.id,
+          roomno: doc.data().roomno,
+          roomType: doc.data().roomType,
+          roomRate: doc.data().roomRate,
+          occupants: doc.data().occupants,
+          imageUrl: doc.data().imageUrl,
+          bedType: doc.data().bedType,
+          description: doc.data().description,
+          createdAt: doc.data().created_at,
+          updatedAt: doc.data.updated_at,
+        });
+      });
+      return response.json(rooms);
+    })
+    .catch((err) => {
+      console.error(err);
+      response.status(500).json({ error: err.code });
+    });
+};
+
+/**
+ * get all the room of a  users
+ * @param {*} request
+ * @param {*} response
+ */
+exports.getMyRooms = (request, response) => {
+  console.log("request.params.userId");
+  const userId = request.params.userId;
+  db.collection("rooms")
+    .orderBy("createdAt", "desc")
+    .where("userId", "==", request.params.userId)
+    .get()
+    .then((data) => {
+      let rooms = [];
+      data.forEach((doc) => {
+        //  console.log(doc);
+        rooms.push({
+          userId: doc.id,
+          roomno: doc.data().roomno,
+          roomType: doc.data().roomType,
+          roomRate: doc.data().roomRate,
+          occupants: doc.data().occupants,
+          imageUrl: doc.data().imageUrl,
+          bedType: doc.data().bedType,
+          description: doc.data().description,
+          createdAt: doc.data().created_at,
+          updatedAt: doc.data.updated_at,
+        });
+      });
+      return response.json(rooms);
+    })
+    .catch((err) => {
+      console.error(err);
+      response.status(500).json({ error: err.code });
+    });
+};
+
 exports.createSingeRoom = (request, response) => {
-  const roomImage = "home1.jpg";
+  const roomImage = "home2.jpg";
   //exports.createUser = functions.https.onRequest((request, response) => {
   if (request.method !== "POST") {
     return response.status(400).json({ error: "Method not allowed" });
   }
   const newRoom = {
-    roomno: request.body.roomno,
+    roomno: Number(request.body.roomno),
     description: request.body.description,
     userId: request.user.uid,
+    roomType: request.body.roomType,
+    roomRate: Number(request.body.roomRate),
+    occupants: Number(request.body.occupants),
+    bedType: request.body.bedType,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     imageUrl: `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${roomImage}?alt=media`,
@@ -64,20 +144,6 @@ exports.uploadRoomImage = (request, response) => {
   const path = require("path");
   const os = require("os");
   const fs = require("fs");
-  // const firebase = require("firebase");
-
-  // var user = firebase.auth().currentUser;
-
-  // console.log(user);
-
-  // db.collection("rooms")
-  //   .where("userId", "==", user.uid)
-  //   .get()
-  //   .then((querySnapshot) => {
-  //     querySnapshot.forEach((doc) => {
-  //       console.log(doc);
-  //     });
-  //   });
 
   const busboy = new BusBoy({ headers: request.headers });
 
