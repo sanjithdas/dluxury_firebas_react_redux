@@ -1,3 +1,10 @@
+/**
+ * @author [Sanjith]
+ * @email [sanjith.das@gmail.com]
+ * @create date 2020-11-02 16:58:07
+ * @modify date 2020-11-03 12:29:20
+ * @desc [Room CRUD]
+ */
 const { db, admin } = require("../util/admin");
 //const firebase = require("firebase");
 
@@ -7,6 +14,8 @@ const bucket = admin.storage().bucket();
 
 //const { firebaseConfig } = require('firebase-functions');
 const firebaseConfig = require("../util/config");
+
+// Listing all rooms
 exports.getAllRooms = (request, response) => {
   db.collection("rooms")
     .orderBy("createdAt", "desc")
@@ -23,6 +32,7 @@ exports.getAllRooms = (request, response) => {
           description: doc.data().description,
           createdAt: doc.data().created_at,
           updatedAt: doc.data.updated_at,
+          roomId: doc.data().roomId,
         });
       });
       return response.json(rooms);
@@ -39,6 +49,7 @@ exports.getAllRooms = (request, response) => {
  * @param {*} response
  */
 
+// show single room based on the roomno
 exports.getRoom = (request, response) => {
   console.log(request.params.roomno);
   const roomno = request.params.roomno;
@@ -75,6 +86,7 @@ exports.getRoom = (request, response) => {
  * @param {*} request
  * @param {*} response
  */
+// Fetch all the rooms belongs to a particular user
 exports.getMyRooms = (request, response) => {
   console.log("request.params.userId");
   const userId = request.params.userId;
@@ -107,6 +119,50 @@ exports.getMyRooms = (request, response) => {
     });
 };
 
+// Update Room
+
+exports.updateMyRoom = (request, response) => {
+  const roomImage = "home2.jpg";
+  console.log(request.body.userId + " Update Room " + request.params.roomno);
+  const updRoom = {
+    roomno: Number(request.body.roomno),
+    description: request.body.description,
+    roomType: request.body.roomType,
+    roomRate: Number(request.body.roomRate),
+    occupants: Number(request.body.occupants),
+    bedType: request.body.bedType,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    imageUrl: `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${roomImage}?alt=media`,
+  };
+  const roomDocument = db
+    .doc(`/rooms/${request.body.userId}`)
+    .update(updRoom)
+    .then((doc) => {
+      console.log(`room  updated successfully`);
+      response.status(200).json({ message: "Room updated successfully" });
+    })
+    .catch((err) => {
+      response.status(500).json({ error: `Error ${err}` });
+    });
+};
+// delete my room
+
+exports.deleteMyRoom = (request, response) => {
+  console.log(request.body.userId + " Update Room " + request.params.userId);
+  const roomDocument = db
+    .doc(`/rooms/${request.params.userId}`)
+    .delete()
+    .then((doc) => {
+      response.status(200).json({ message: "Room deleted successfully" });
+      console.log(`room ${doc} deleted successfully`);
+    })
+    .catch((err) => {
+      response.status(500).json({ error: `Error ${err}` });
+    });
+};
+
+// Upload room Image
 exports.createSingeRoom = (request, response) => {
   const roomImage = "home2.jpg";
   //exports.createUser = functions.https.onRequest((request, response) => {
@@ -128,7 +184,10 @@ exports.createSingeRoom = (request, response) => {
   db.collection("rooms")
     .add(newRoom)
     .then((doc) => {
-      response.json({ message: `document ${doc.id} created successfully` });
+      const resRoom = newRoom;
+      resRoom.roomId = doc.id;
+      console.log(resRoom.roomId);
+      response.json(resRoom);
     })
     .catch((err) => {
       console.log(err);

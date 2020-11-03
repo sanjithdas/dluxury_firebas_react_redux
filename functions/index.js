@@ -2,8 +2,8 @@
  * @author [Sanjith]
  * @email [sanjith.das@gmail.com]
  * @create date 2020-10-16 23:17:51
- * @modify date 2020-11-01 21:09:30
- * @desc [description]
+ * @modify date 2020-11-03 12:28:20
+ * @desc [express init , all the routes defined here]
  */
 
 const cors = require("cors");
@@ -22,6 +22,8 @@ const {
   uploadRoomImage,
   getRoom,
   getMyRooms,
+  updateMyRoom,
+  deleteMyRoom,
 } = require("./handlers/rooms");
 
 const { signup, login } = require("./handlers/users");
@@ -68,8 +70,6 @@ app.get("/users", (request, response) => {
 // http://ssss.com/api/
 // exports.api = functions.region('australia-south-east').htttps.onRequest(app) // check the correct area in the firebase
 
-//validate data
-
 //Sign up route
 
 app.post("/signup", signup);
@@ -90,9 +90,17 @@ app.get("/rooms", getAllRooms);
 
 app.get("/myrooms/:userId", getMyRooms);
 
+// update room with given id
+
+app.put("/myroom/update/:roomno", updateMyRoom);
+
 //get a room with room no
 
 app.get("/room/:roomno", getRoom);
+
+// Delete Room with room no
+
+app.delete("/myroom/delete/:userId", deleteMyRoom);
 
 // upload images for the room
 
