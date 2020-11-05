@@ -2,7 +2,7 @@
  * @author [Sanjith]
  * @email [sanjith.das@gmail.com]
  * @create date 2020-10-16 23:17:51
- * @modify date 2020-11-03 12:28:20
+ * @modify date 2020-11-05 16:59:51
  * @desc [express init , all the routes defined here]
  */
 
@@ -10,7 +10,20 @@ const cors = require("cors");
 
 const functions = require("firebase-functions");
 
+const multer = require("multer");
+
+var upload = multer({ dest: "/uploads" });
+
 const app = require("express")();
+
+const bodyParser = require("body-parser");
+
+const fileUpload = require("express-fileupload");
+//app.use(bodyParser.json());
+
+app.use(fileUpload());
+
+//app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(cors());
 
@@ -27,7 +40,7 @@ const {
 } = require("./handlers/rooms");
 
 const { signup, login } = require("./handlers/users");
-const { request, response } = require("express");
+//const { request, response } = require("express");
 
 /**
  * fetch user from the firebase db
@@ -80,7 +93,7 @@ app.post("/login", login);
 
 // create room
 
-app.post("/room", checkAuth, createSingeRoom);
+app.post("/room", upload.single("imageUrl"), checkAuth, createSingeRoom);
 
 // list all the rooms
 
@@ -104,6 +117,6 @@ app.delete("/myroom/delete/:userId", deleteMyRoom);
 
 // upload images for the room
 
-app.post("/room/image", checkAuth, uploadRoomImage);
+app.post("/room/image/:userId", checkAuth, uploadRoomImage);
 
 exports.api = functions.https.onRequest(app);

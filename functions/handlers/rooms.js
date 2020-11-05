@@ -2,7 +2,7 @@
  * @author [Sanjith]
  * @email [sanjith.das@gmail.com]
  * @create date 2020-11-02 16:58:07
- * @modify date 2020-11-03 12:29:20
+ * @modify date 2020-11-05 17:20:41
  * @desc [Room CRUD]
  */
 const { db, admin } = require("../util/admin");
@@ -14,6 +14,10 @@ const bucket = admin.storage().bucket();
 
 //const { firebaseConfig } = require('firebase-functions');
 const firebaseConfig = require("../util/config");
+
+const path = require("path");
+
+let docId = null;
 
 // Listing all rooms
 exports.getAllRooms = (request, response) => {
@@ -123,7 +127,7 @@ exports.getMyRooms = (request, response) => {
 
 exports.updateMyRoom = (request, response) => {
   const roomImage = "home2.jpg";
-  console.log(request.body.userId + " Update Room " + request.params.roomno);
+
   const updRoom = {
     roomno: Number(request.body.roomno),
     description: request.body.description,
@@ -164,11 +168,11 @@ exports.deleteMyRoom = (request, response) => {
 
 // Upload room Image
 exports.createSingeRoom = (request, response) => {
-  const roomImage = "home2.jpg";
-  //exports.createUser = functions.https.onRequest((request, response) => {
+  const roomImage = "no-images.jpg";
   if (request.method !== "POST") {
     return response.status(400).json({ error: "Method not allowed" });
   }
+
   const newRoom = {
     roomno: Number(request.body.roomno),
     description: request.body.description,
@@ -181,12 +185,16 @@ exports.createSingeRoom = (request, response) => {
     updatedAt: new Date().toISOString(),
     imageUrl: `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${roomImage}?alt=media`,
   };
+
   db.collection("rooms")
     .add(newRoom)
     .then((doc) => {
       const resRoom = newRoom;
       resRoom.roomId = doc.id;
-      console.log(resRoom.roomId);
+
+      docId = doc.id;
+      // this.uploadRoomImage(request, response, doc.id);
+
       response.json(resRoom);
     })
     .catch((err) => {
@@ -210,10 +218,9 @@ exports.uploadRoomImage = (request, response) => {
   let imageToBeUploaded = {};
 
   busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-    // console.log(fieldname);
-    // console.log(filename);
-    // console.log(mimetype);
-
+    if (mimetype != "image/jpeg" && mimetype != "image/png") {
+      return response.status(400).json({ error: "Wrong file type submitted" });
+    }
     const imageExtension = filename.split(".")[filename.split(".").length - 1];
     //3433432342.png
     imageFileName = `${Math.round(
@@ -239,15 +246,20 @@ exports.uploadRoomImage = (request, response) => {
       })
       .then((doc) => {
         const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${imageFileName}?alt=media`;
+
         return db
-          .doc(`/rooms/niO0vG9CntNUxA6b5aL9`)
+          .doc(`/rooms/${request.params.userId}`)
           .update({ imageUrl: imageUrl });
+        // else {
+        //   response.status(500).json({ error: "Doc is null" });
+        // }
       })
+
       .then(() => {
         return response.json({ message: "Image uploaded successfully " });
       })
       .catch((err) => {
-        // console.error(err);
+        console.error(err);
         return response.status(500).json({ error: err });
       });
   });
