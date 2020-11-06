@@ -2,7 +2,7 @@
  * @author [Sanjith]
  * @email [sanjith.das@gmail.com]
  * @create date 2020-11-02 16:58:07
- * @modify date 2020-11-05 17:20:41
+ * @modify date 2020-11-06 20:30:24
  * @desc [Room CRUD]
  */
 const { db, admin } = require("../util/admin");
@@ -58,12 +58,14 @@ exports.getRoom = (request, response) => {
   console.log(request.params.roomno);
   const roomno = request.params.roomno;
   db.collection("rooms")
+    .where("roomno", "==", roomno)
     .orderBy("createdAt", "desc")
-    .where("roomno", "==", +request.params.roomno)
+
     .get()
     .then((data) => {
       let rooms = [];
       data.forEach((doc) => {
+        console.log(doc.id);
         rooms.push({
           userId: doc.id,
           roomno: doc.data().roomno,
@@ -73,10 +75,11 @@ exports.getRoom = (request, response) => {
           imageUrl: doc.data().imageUrl,
           bedType: doc.data().bedType,
           description: doc.data().description,
-          createdAt: doc.data().created_at,
-          updatedAt: doc.data.updated_at,
+          createdAt: doc.data().createdAt,
+          updatedAt: doc.data.updatedAt,
         });
       });
+      // console.log(rooms);
       return response.json(rooms);
     })
     .catch((err) => {
@@ -92,7 +95,7 @@ exports.getRoom = (request, response) => {
  */
 // Fetch all the rooms belongs to a particular user
 exports.getMyRooms = (request, response) => {
-  console.log("request.params.userId");
+  console.log(request.params.userId);
   const userId = request.params.userId;
   db.collection("rooms")
     .orderBy("createdAt", "desc")
@@ -115,6 +118,7 @@ exports.getMyRooms = (request, response) => {
           updatedAt: doc.data.updated_at,
         });
       });
+
       return response.json(rooms);
     })
     .catch((err) => {
@@ -126,10 +130,8 @@ exports.getMyRooms = (request, response) => {
 // Update Room
 
 exports.updateMyRoom = (request, response) => {
-  const roomImage = "home2.jpg";
-
   const updRoom = {
-    roomno: Number(request.body.roomno),
+    roomno: request.body.roomno,
     description: request.body.description,
     roomType: request.body.roomType,
     roomRate: Number(request.body.roomRate),
@@ -137,7 +139,7 @@ exports.updateMyRoom = (request, response) => {
     bedType: request.body.bedType,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    imageUrl: `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${roomImage}?alt=media`,
+    // imageUrl: `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${roomImage}?alt=media`,
   };
   const roomDocument = db
     .doc(`/rooms/${request.body.userId}`)
@@ -174,7 +176,7 @@ exports.createSingeRoom = (request, response) => {
   }
 
   const newRoom = {
-    roomno: Number(request.body.roomno),
+    roomno: request.body.roomno,
     description: request.body.description,
     userId: request.user.uid,
     roomType: request.body.roomType,
