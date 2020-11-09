@@ -2,7 +2,7 @@
  * @author [Sanjith]
  * @email [sanjith.das@gmail.com]
  * @create date 2020-10-16 23:17:51
- * @modify date 2020-11-05 16:59:51
+ * @modify date 2020-11-09 15:55:38
  * @desc [express init , all the routes defined here]
  */
 
@@ -56,7 +56,6 @@ app.get("/users", (request, response) => {
       data.forEach((doc) => {
         users.push({
           userId: doc.id,
-          // name: doc.data().name,
           email: doc.data().email,
           password: doc.data().password,
           created_at: doc.data().created_at,

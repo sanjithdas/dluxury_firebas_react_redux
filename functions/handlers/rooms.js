@@ -2,7 +2,7 @@
  * @author [Sanjith]
  * @email [sanjith.das@gmail.com]
  * @create date 2020-11-02 16:58:07
- * @modify date 2020-11-06 20:30:24
+ * @modify date 2020-11-09 15:07:41
  * @desc [Room CRUD]
  */
 const { db, admin } = require("../util/admin");
@@ -220,54 +220,62 @@ exports.uploadRoomImage = (request, response) => {
   let imageToBeUploaded = {};
 
   busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-    if (mimetype != "image/jpeg" && mimetype != "image/png") {
-      return response.status(400).json({ error: "Wrong file type submitted" });
+    if (filename != null || filename != "") {
+      if (mimetype != "image/jpeg" && mimetype != "image/png") {
+        return response
+          .status(400)
+          .json({ error: "Wrong file type submitted" });
+      }
+      const imageExtension = filename.split(".")[
+        filename.split(".").length - 1
+      ];
+      //3433432342.png
+      imageFileName = `${Math.round(
+        Math.random() * 1000000000
+      )}.${imageExtension}`;
+      const filepath = path.join(os.tmpdir(), imageFileName);
+
+      imageToBeUploaded = { filepath, mimetype };
+
+      file.pipe(fs.createWriteStream(filepath));
     }
-    const imageExtension = filename.split(".")[filename.split(".").length - 1];
-    //3433432342.png
-    imageFileName = `${Math.round(
-      Math.random() * 1000000000
-    )}.${imageExtension}`;
-    const filepath = path.join(os.tmpdir(), imageFileName);
-
-    imageToBeUploaded = { filepath, mimetype };
-
-    file.pipe(fs.createWriteStream(filepath));
   });
-
-  busboy.on("finish", () => {
-    console.log(imageToBeUploaded);
-    bucket
-      .upload(imageToBeUploaded.filepath, {
-        resumable: false,
-        metadata: {
+  if (imageToBeUploaded != "") {
+    busboy.on("finish", () => {
+      console.log(imageToBeUploaded);
+      bucket
+        .upload(imageToBeUploaded.filepath, {
+          resumable: false,
           metadata: {
-            contentType: imageToBeUploaded.mimetype,
+            metadata: {
+              contentType: imageToBeUploaded.mimetype,
+            },
           },
-        },
-      })
-      .then((doc) => {
-        const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${imageFileName}?alt=media`;
+        })
+        .then((doc) => {
+          const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${imageFileName}?alt=media`;
 
-        return db
-          .doc(`/rooms/${request.params.userId}`)
-          .update({ imageUrl: imageUrl });
-        // else {
-        //   response.status(500).json({ error: "Doc is null" });
-        // }
-      })
+          return db
+            .doc(`/rooms/${request.params.userId}`)
+            .update({ imageUrl: imageUrl });
+          // else {
+          //   response.status(500).json({ error: "Doc is null" });
+          // }
+        })
 
-      .then(() => {
-        return response.json({ message: "Image uploaded successfully " });
-      })
-      .catch((err) => {
-        console.error(err);
-        return response.status(500).json({ error: err });
-      });
-  });
-  busboy.end(request.rawBody);
-  /*
+        .then(() => {
+          return response.json({ message: "Image uploaded successfully " });
+        })
+        .catch((err) => {
+          console.error(err);
+          return response.status(500).json({ error: err });
+        });
+    });
+
+    busboy.end(request.rawBody);
+    /*
   const roomImage = 'no-image.png'
 
   */
+  }
 };
